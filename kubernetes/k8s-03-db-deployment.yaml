@@ -1,0 +1,30 @@
+# k8s-03-db-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-db-deployment
+spec:
+  replicas: 1 # Database does not need to be scalable (per requirement)
+  selector:
+    matchLabels:
+      app: postgres-db
+  template:
+    metadata:
+      labels:
+        app: postgres-db
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine # Use a standard Postgres image
+        ports:
+        - containerPort: 5432
+        envFrom:
+        - secretRef: # Load credentials from the Secret
+            name: postgres-secret
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: postgres-storage
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc # Uses the persistent storage

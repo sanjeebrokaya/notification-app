@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Notifications</title>
+  <style>
+    :root{--bg:#0f172a;--card:#111827;--text:#e5e7eb;--muted:#9ca3af;--accent:#38bdf8;--ok:#22c55e;--err:#ef4444;}
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(180deg,#0b1220,#0f172a 40%);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif;color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .card{width:clamp(320px, 60vw, 760px);background:rgba(17,24,39,0.9);border:1px solid rgba(148,163,184,.16);border-radius:20px;padding:28px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    h1{margin:0 0 4px;font-size:28px;letter-spacing:.4px}
+    p.sub{margin:0 0 22px;color:var(--muted)}
+    form{display:flex;gap:10px}
+    input[type="text"]{flex:1;padding:12px 14px;background:#0b1020;border:1px solid rgba(148,163,184,.22);border-radius:12px;color:var(--text);outline:none}
+    input[type="text"]:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(56,189,248,.15)}
+    button{padding:12px 18px;border:0;border-radius:12px;background:linear-gradient(135deg,var(--accent),#60a5fa);color:#031525;font-weight:700;cursor:pointer}
+    button:disabled{opacity:.6;cursor:not-allowed}
+    .row{display:flex;gap:16px;margin-top:16px;flex-wrap:wrap}
+    .panel{flex:1;min-width:260px;background:#0b1020;border:1px solid rgba(148,163,184,.16);border-radius:14px;padding:14px}
+    .panel h3{margin:0 0 8px;font-size:16px;color:#cbd5e1}
+    pre{margin:0;white-space:pre-wrap;word-wrap:break-word;max-height:280px;overflow:auto}
+    .badge{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;background:#0b1020;border:1px solid rgba(148,163,184,.16);font-size:12px;color:#cbd5e1;margin-top:10px}
+    .dot{width:9px;height:9px;border-radius:50%}
+    .ok{background:var(--ok)} .err{background:var(--err)}
+    footer{margin-top:18px;color:var(--muted);font-size:12px;text-align:center}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Send a notification</h1>
+    <p class="sub">This calls the <strong>gateway-service</strong> (port 8088) which forwards to the <strong>logger-service</strong> and stores your message in PostgreSQL.</p>
+    <form id="form">
+      <input id="msg" type="text" placeholder="Type your message…" required />
+      <button id="sendBtn" type="submit">Send</button>
+    </form>
+
+    <div class="row">
+      <div class="panel">
+        <h3>Request → Response</h3>
+        <pre id="out">Waiting…</pre>
+        <div class="badge" id="badge"><span class="dot err" id="dot"></span><span id="badgeText">Not sent</span></div>
+      </div>
+      <div class="panel">
+        <h3>Recent Logs (from logger-service)</h3>
+        <pre id="logs">Click “Send” to refresh…</pre>
+      </div>
+    </div>
+
+    <footer>Tip: If you see a database error, initialize the table using the command shown in the README below.</footer>
+  </div>
+
+  <script>
+    const out = document.getElementById('out');
+    const logs = document.getElementById('logs');
+    const dot  = document.getElementById('dot');
+    const badgeText = document.getElementById('badgeText');
+
+    async function send(e){
+      e.preventDefault();
+      const btn = document.getElementById('sendBtn');
+      const msg = document.getElementById('msg').value.trim();
+      if(!msg) return;
+      btn.disabled = true; out.textContent = 'Sending…';
+
+      try{
+        const r = await fetch('http://localhost:8088/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: msg })
+        });
+        const data = await r.json();
+        out.textContent = JSON.stringify(data, null, 2);
+        if (r.ok) { dot.className='dot ok'; badgeText.textContent='Sent OK'; }
+        else { dot.className='dot err'; badgeText.textContent='Error'; }
+        await refreshLogs();
+      }catch(err){
+        out.textContent = String(err);
+        dot.className='dot err'; badgeText.textContent='Error';
+      }finally{ btn.disabled = false; }
+    }
+
+    async function refreshLogs(){
+      try{
+        const r = await fetch('http://localhost:8081/logs');
+        const data = await r.json();
+        logs.textContent = JSON.stringify(data, null, 2);
+      }catch(err){
+        logs.textContent = String(err);
+      }
+    }
+
+    document.getElementById('form').addEventListener('submit', send);
+  </script>
+</body>
+</html>

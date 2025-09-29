@@ -1,0 +1,12 @@
+# k8s-06-logger-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: logger-service # Internal DNS name: 'logger-service'
+spec:
+  selector:
+    app: logger-service
+  ports:
+  - port: 8081
+    targetPort: 8081
+  type: ClusterIP # Internal only service

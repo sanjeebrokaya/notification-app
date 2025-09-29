@@ -1,0 +1,13 @@
+# k8s-08-gateway-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-gateway-service
+spec:
+  selector:
+    app: notification-gateway
+  ports:
+  - port: 80 # The port clients connect to
+    targetPort: 8080 # The internal container port
+    nodePort: 30080 # Exposes the service on a specific high port on every node
+  type: NodePort # Allows external access via <NodeIP>:<NodePort>

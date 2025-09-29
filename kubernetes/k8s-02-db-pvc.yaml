@@ -1,0 +1,12 @@
+# k8s-02-db-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  # Storage requested for the DB - adjust size as needed for your K8s environment
+  resources:
+    requests:
+      storage: 1Gi

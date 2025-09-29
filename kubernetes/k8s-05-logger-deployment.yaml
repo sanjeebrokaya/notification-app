@@ -1,0 +1,41 @@
+# k8s-05-logger-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logger-service-deployment
+spec:
+  replicas: 3 # Horizontally Scalable: Start with 3 instances
+  selector:
+    matchLabels:
+      app: logger-service
+  template:
+    metadata:
+      labels:
+        app: logger-service
+    spec:
+      containers:
+      - name: logger-service
+        # REPLACE with your Docker Hub image
+        image: sanjeebrokaya/logger-service:latest 
+        ports:
+        - containerPort: 8081
+        env:
+        # Pass the internal DB service name and port
+        - name: POSTGRES_HOST
+          value: "postgres-db" 
+        # Pass DB credentials from the Secret
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_DB
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_PASSWORD
