@@ -29,7 +29,7 @@
 <body>
   <div class="card">
     <h1>Send a notification</h1>
-    <p class="sub">This calls the <strong>gateway-service</strong> (port 8088) which forwards to the <strong>logger-service</strong> and stores your message in PostgreSQL.</p>
+    <p class="sub">This calls the <strong>gateway-service</strong> (NodePort 30080) which forwards to the <strong>logger-service</strong> and stores your message in PostgreSQL.</p>
     <form id="form">
       <input id="msg" type="text" placeholder="Type your message…" required />
       <button id="sendBtn" type="submit">Send</button>
@@ -42,7 +42,7 @@
         <div class="badge" id="badge"><span class="dot err" id="dot"></span><span id="badgeText">Not sent</span></div>
       </div>
       <div class="panel">
-        <h3>Recent Logs (from logger-service)</h3>
+        <h3>Recent Logs (via gateway)</h3>
         <pre id="logs">Click “Send” to refresh…</pre>
       </div>
     </div>
@@ -62,7 +62,7 @@
       btn.disabled = true; out.textContent = 'Sending…';
 
       try{
-        const r = await fetch('http://localhost:8088/notify', {
+        const r = await fetch('http://localhost:30080/notify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: msg })
@@ -80,7 +80,7 @@
 
     async function refreshLogs(){
       try{
-        const r = await fetch('http://localhost:8081/logs');
+        const r = await fetch('http://localhost:30080/logs');
         const data = await r.json();
         logs.textContent = JSON.stringify(data, null, 2);
       }catch(err){
